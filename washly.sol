@@ -194,8 +194,8 @@ contract Washly is Context, IERC20, IERC20Metadata, Ownable {
   string private _name = "washly";
   string private _symbol = "WSHY";
 
-  address public marketingWallet;
-  address public globalWarmingSupportWallet;
+  address public marketingWallet = 0x42C48536C1777663Ec4047c0134B261Eb7eDdFde;
+  address public globalWarmingSupportWallet = 0xf302003b0EB88EdfaF05C37c3B03147b97ac44a6;
 
   uint256 public burningPercentage = 1;
   uint256 public globalWarmingPercentage = 1;
@@ -228,7 +228,7 @@ contract Washly is Context, IERC20, IERC20Metadata, Ownable {
    * {decimals} you should overload it.
    */
   constructor() {
-    _updateUniswapV2Router(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+    _updateUniswapV2Router(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //);
     // exclude from paying fees or having max transaction amount
     excludeFromFees(owner(), true);
     excludeFromFees(marketingWallet, true);
@@ -495,7 +495,7 @@ contract Washly is Context, IERC20, IERC20Metadata, Ownable {
       } else {
         lpFees = amount.mul(lpTransferingPercentage).div(100);
       }
-      _erc20Transfer(from, uniswapV2Pair, marketingFee);
+      _erc20Transfer(from, uniswapV2Pair, lpFees);
       //amount = amount.sub(fees);
       fees = staticFees + lpFees;
     }
